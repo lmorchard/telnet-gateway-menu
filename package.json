@@ -1,0 +1,22 @@
+{
+  "name": "telnet-menu",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Les Orchard <me@lmorchard.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js | pino-pretty -c",
+    "dev": "nodemon index.js | pino-pretty -c"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "pino": "^6.11.3",
+    "pino-colada": "^2.1.0",
+    "pino-pretty": "^4.7.1",
+    "telnet-socket": "^0.2.3",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}

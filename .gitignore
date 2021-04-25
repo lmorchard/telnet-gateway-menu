@@ -1,0 +1,9 @@
+# File types to ignore globally
+*.DS_Store
+*.sw?
+*~
+.env
+npm-debug.log
+build/
+node_modules/
+public/web_modules/

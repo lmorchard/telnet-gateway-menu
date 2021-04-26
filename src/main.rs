@@ -5,6 +5,9 @@ use std::str;
 use std::thread;
 use std::time::Duration;
 
+extern crate libtelnet_rs;
+use libtelnet_rs::events::TelnetEvents;
+
 fn main() {
     env_logger::init();
     log::info!("starting up");
@@ -103,6 +106,8 @@ fn read_line(local_stream: &mut TcpStream, prompt: &str) -> Result<String, std::
 
     local_stream.write(prompt.as_bytes())?;
 
+    let mut parser = libtelnet_rs::Parser::new();
+
     loop {
         // Try reading a chunk of input
         let len = match local_stream.read(&mut buffer) {
@@ -118,11 +123,22 @@ fn read_line(local_stream: &mut TcpStream, prompt: &str) -> Result<String, std::
         local_stream.write(&buffer[0..len])?;
 
         // TODO: support backspace!
+        let telnet_events = parser.receive(&buffer[0..len]);
+        for ev in telnet_events {
+            match ev {
+                TelnetEvents::IAC(iac) => log::info!("IAC {:?}", iac.into_bytes()),
+                TelnetEvents::Negotiation(neg) => log::info!("Negotiation {:?}", neg.into_bytes()),
+                TelnetEvents::Subnegotiation(subneg) => log::info!("Subnegotiation {:?}", subneg.into_bytes()),
+                TelnetEvents::DataReceive(data) => log::info!("DataReceive {:?}", data),
+                TelnetEvents::DataSend(data) => log::info!("DataSend {:?}", data),
+                TelnetEvents::DecompressImmediate(data) => log::info!("DecompressImmediate {:?}", data),
+            }
+        }
 
         // Collect this chunk of input until it contains a return
         if let Ok(data) = str::from_utf8(&buffer[0..len]) {
             input.push_str(data);
-            if let Some(pos) = input.find("\r\n") {
+            if let Some(pos) = input.find("\r") {
                 input.truncate(pos);
                 return Ok(input);
             }
@@ -179,6 +195,8 @@ fn read_address_book<'a>() -> Vec<(&'a str, &'a str)> {
     let address_book: Vec<(&str, &str)> = vec![
         ("Level29", "bbs.fozztexx.com:23"),
         ("Particles", "particlesbbs.dyndns.org:6400"),
+        ("The Basement BBS", "basementbbs.ddns.net:9000"),
+        ("Part-Time", "ptbbs.ddns.net:8000"),
     ];
     return address_book;
 }

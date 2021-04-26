@@ -4,6 +4,8 @@ A simple address book service for telnet hosts.
 
 ## What is this?
 
+![Capture](https://user-images.githubusercontent.com/21687/116037482-069ac200-a61d-11eb-8c7a-f67b53983149.PNG)
+
 ![20210423_220907](https://user-images.githubusercontent.com/21687/116024629-7c922f80-a603-11eb-8b9e-00dc978eebdd.jpg)
 
 I have several old computers in my office. Each of them has a peripheral that connects to wifi and pretends to be a modem. But, instead of dialing a telephone number, I "dial" an internet address and the device connects via telnet.
@@ -31,6 +33,8 @@ I also wanted an excuse to play with Rust some more.
 * X/Y/ZMODEM transfers to/from the gateway computer for file sharing with the retro computers
 
 * ZMODEM to download a URL
+
+* Username / password auto-fill?
 
 * Macros?
 

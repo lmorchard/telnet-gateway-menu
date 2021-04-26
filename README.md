@@ -14,6 +14,8 @@ I also wanted an excuse to play with Rust some more.
 
 ## To do
 
+* GitHub Actions to generate cross-platform builds & releases
+
 * Edit the address book from within the menus
 
 * X/Y/ZMODEM transfers to/from the gateway computer for file sharing with the retro computers

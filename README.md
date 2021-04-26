@@ -14,11 +14,27 @@ I also wanted an excuse to play with Rust some more.
 
 ## To do
 
+* Read address book from disk
+
+* Require return before accepting command input
+
+* Better [actual telnet protocol support](https://github.com/envis10n/libtelnet-rs) - this is all completely naive so far
+
+* Tests & CI
+
 * GitHub Actions to generate cross-platform builds & releases
 
 * Edit the address book from within the menus
 
+* Log metadata like last-connection timestamp
+
 * X/Y/ZMODEM transfers to/from the gateway computer for file sharing with the retro computers
+
+* ZMODEM to download a URL
+
+* Macros?
+
+* Share one remote connection between multiple local computers simultaneously? (i.e. like screen?)
 
 * Maybe somehow combine the functions of [tcpser] for a one-stop utility?
 

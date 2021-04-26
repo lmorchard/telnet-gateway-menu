@@ -22,14 +22,6 @@ fn main() {
     }
 }
 
-fn read_address_book<'a>() -> Vec<(&'a str, &'a str)> {
-    let address_book: Vec<(&str, &str)> = vec![
-        ("Level29", "bbs.fozztexx.com:23"),
-        ("Particles", "particlesbbs.dyndns.org:6400"),
-    ];
-    return address_book;
-}
-
 fn handle_connection(
     mut local_stream: TcpStream,
     address_book: &Vec<(&str, &str)>,
@@ -71,8 +63,8 @@ fn run_menu<'a>(
     local_stream: &mut TcpStream,
     address_book: &'a Vec<(&'a str, &'a str)>,
 ) -> Result<Option<&'a (&'a str, &'a str)>, std::io::Error> {
-    let mut buffer = [0; 1024];
     local_stream.set_read_timeout(None)?;
+
     loop {
         write!(local_stream, "\r\nAddress book:\r\n")?;
         write!(local_stream, "{:>3}: {}\r\n", 0, "Logoff")?;
@@ -83,8 +75,36 @@ fn run_menu<'a>(
             }
             idx += 1;
         }
-        write!(local_stream, "> ")?;
 
+        let input = read_line(local_stream, "> ")?;
+        if let Ok(menu_choice) = input.trim().parse::<usize>() {
+            if menu_choice == 0 {
+                write!(local_stream, "\r\nGoodbye!\r\n")?;
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::ConnectionAborted,
+                    "logoff",
+                ));
+            }
+            if let Some(choice) = address_book.get(menu_choice - 1) {
+                return Ok(Some(choice));
+            }
+        }
+        write!(
+            local_stream,
+            "\r\nInvalid choice - {:?} - please try again.\r\n",
+            input
+        )?;
+    }
+}
+
+fn read_line(local_stream: &mut TcpStream, prompt: &str) -> Result<String, std::io::Error> {
+    let mut buffer = [0; 1024];
+    let mut input = String::new();
+
+    local_stream.write(prompt.as_bytes())?;
+
+    loop {
+        // Try reading a chunk of input
         let len = match local_stream.read(&mut buffer) {
             Err(err) => Err(err),
             Ok(len) if len == 0 => Err(std::io::Error::new(
@@ -94,22 +114,19 @@ fn run_menu<'a>(
             Ok(len) => Ok(len),
         }?;
 
-        if let Ok(input) = str::from_utf8(&buffer[0..len]) {
-            if let Ok(menu_choice) = input.trim().parse::<usize>() {
-                if menu_choice == 0 {
-                    write!(local_stream, "\r\nGoodbye!\r\n")?;
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::ConnectionAborted,
-                        "logoff",
-                    ));
-                }
-                if let Some(choice) = address_book.get(menu_choice - 1) {
-                    return Ok(Some(choice));
-                }
+        // TODO: work out when ont to echo per telnet protocol
+        local_stream.write(&buffer[0..len])?;
+
+        // TODO: support backspace!
+
+        // Collect this chunk of input until it contains a return
+        if let Ok(data) = str::from_utf8(&buffer[0..len]) {
+            input.push_str(data);
+            if let Some(pos) = input.find("\r\n") {
+                input.truncate(pos);
+                return Ok(input);
             }
         }
-
-        write!(local_stream, "\r\nInvalid choice, please try again.\r\n")?;
     }
 }
 
@@ -156,4 +173,17 @@ fn relay_sockets(
             Ok(_) => Ok(()),
         },
     }
+}
+
+fn read_address_book<'a>() -> Vec<(&'a str, &'a str)> {
+    let address_book: Vec<(&str, &str)> = vec![
+        ("Level29", "bbs.fozztexx.com:23"),
+        ("Particles", "particlesbbs.dyndns.org:6400"),
+    ];
+    return address_book;
+}
+
+#[test]
+fn test_read_address_book() {
+    assert_eq!(2 + 2, 4);
 }

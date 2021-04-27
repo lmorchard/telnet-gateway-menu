@@ -99,7 +99,6 @@ jobs:
       #    args: '-- -h'
 
   build:
-    name: Rust project
     needs:
       - lints
       - test

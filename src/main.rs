@@ -123,7 +123,7 @@ fn run_menu<'a>(
 
     loop {
         write!(local_stream, "\r\nAddress book:\r\n")?;
-        write!(local_stream, "{:>3}: {}\r\n", 0, "Logoff")?;
+        write!(local_stream, "{:>3}: Logoff\r\n", 0)?;
 
         let mut idx = 0;
         let addresses = &address_book.addresses;
@@ -165,7 +165,7 @@ fn read_line_from_stream(
     let mut buffer = [0; 1024];
     let mut input = String::new();
 
-    local_stream.write(prompt.as_bytes())?;
+    local_stream.write_all(prompt.as_bytes())?;
 
     let mut parser = libtelnet_rs::Parser::new();
 
@@ -181,7 +181,7 @@ fn read_line_from_stream(
         }?;
 
         // TODO: work out when ont to echo per telnet protocol
-        local_stream.write(&buffer[0..len])?;
+        local_stream.write_all(&buffer[0..len])?;
 
         // TODO: support backspace!
         let telnet_events = parser.receive(&buffer[0..len]);
@@ -203,7 +203,7 @@ fn read_line_from_stream(
         // Collect this chunk of input until it contains a return
         if let Ok(data) = str::from_utf8(&buffer[0..len]) {
             input.push_str(data);
-            if let Some(pos) = input.find("\r") {
+            if let Some(pos) = input.find('\r') {
                 input.truncate(pos);
                 return Ok(input);
             }

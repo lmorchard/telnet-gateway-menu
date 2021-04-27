@@ -97,7 +97,7 @@ jobs:
       #  with:
       #    command: run
       #    args: '-- -h'
-        
+
   build:
     needs:
       - lints
@@ -142,10 +142,10 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         env:
-          REPOSITORY_NAME: '${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}'
+          REPOSITORY_NAME: "${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}"
         with:
           command: build
-          args: '--release'          
+          args: "--release"
       - uses: actions/upload-artifact@master
         with:
           name: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}
@@ -157,7 +157,7 @@ jobs:
       - test
       - check
     runs-on: ubuntu-latest
-    strategy: 
+    strategy:
       matrix:
         target:
           - armv7-unknown-linux-gnueabihf
@@ -189,11 +189,11 @@ jobs:
           target: ${{ matrix.target }}
       - name: Build target
         uses: actions-rs/cargo@v1
+        env:
+          REPOSITORY_NAME: "${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}"
         with:
           use-cross: true
           command: build
-          env:
-            REPOSITORY_NAME: '${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}'
           args: --release --target ${{ matrix.target }}
       - uses: actions/upload-artifact@master
         with:

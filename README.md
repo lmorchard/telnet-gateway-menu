@@ -18,10 +18,6 @@ I also wanted an excuse to play with Rust some more.
 
 * Better [actual telnet protocol support](https://github.com/envis10n/libtelnet-rs) - this is all completely naive so far
 
-* Tests & CI
-
-* GitHub Actions to generate cross-platform builds & releases
-
 * Edit the address book from within the menus
 
 * Log metadata like last-connection timestamp

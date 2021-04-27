@@ -4,9 +4,11 @@ version = "0.1.0"
 authors = ["Les Orchard <me@lmorchard.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-log = "0.4"
+config = "0.11"
 env_logger = "0.8"
+lazy_static = "1.4.0"
 libtelnet-rs = "1.1"
+log = "0.4"
+serde = { version = "1.0.125", features = ["derive"] }
+toml = "0.5"

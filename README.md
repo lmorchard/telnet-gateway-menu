@@ -16,10 +16,6 @@ I also wanted an excuse to play with Rust some more.
 
 ## To do
 
-* Read address book from disk
-
-* Require return before accepting command input
-
 * Better [actual telnet protocol support](https://github.com/envis10n/libtelnet-rs) - this is all completely naive so far
 
 * Tests & CI

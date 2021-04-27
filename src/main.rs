@@ -1,23 +1,43 @@
+#[macro_use]
+extern crate lazy_static;
+extern crate config;
+extern crate libtelnet_rs;
+
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
+use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::process;
 use std::str;
+use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
 
-extern crate libtelnet_rs;
+use config::Config;
 use libtelnet_rs::events::TelnetEvents;
+use serde::{Deserialize, Serialize};
+
+lazy_static! {
+    static ref CONFIG: RwLock<Config> = RwLock::new(Config::default());
+}
 
 fn main() {
     env_logger::init();
     log::info!("starting up");
 
+    if let Err(err) = load_config() {
+        log::error!("Failed to load config: {:?}", err);
+        process::exit(1);
+    }
+
     let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
     loop {
         for stream in listener.incoming() {
             thread::spawn(|| {
-                let address_book = read_address_book();
-                if let Err(err) = handle_connection(stream.unwrap(), &address_book) {
+                if let Err(err) = handle_connection(stream.unwrap()) {
                     log::error!("connection error {:?}", err);
                 }
             });
@@ -25,71 +45,109 @@ fn main() {
     }
 }
 
-fn handle_connection(
-    mut local_stream: TcpStream,
-    address_book: &Vec<(&str, &str)>,
-) -> Result<(), std::io::Error> {
+fn load_config() -> Result<(), Box<dyn std::error::Error>> {
+    let mut config = CONFIG.write()?;
+    config
+        .set_default("addresses_filename", "addresses.toml")?
+        .merge(config::File::with_name("Settings"))?
+        .merge(config::Environment::with_prefix("APP"))?;
+    Ok(())
+}
+
+fn handle_connection(mut local_stream: TcpStream) -> Result<(), Box<dyn Error>> {
     log::info!("incoming connection {:?}", local_stream.peer_addr()?);
-
     write!(local_stream, "Hello, {:?}\r\n", local_stream.peer_addr()?)?;
-
     loop {
-        if let Some((label, address)) = run_menu(&mut local_stream, address_book)? {
-            log::info!("outgoing connection {:?}", address);
-            write!(
-                local_stream,
-                "\r\nConnecting to {} - {}\r\n",
-                label, address
-            )?;
-            match run_telnet_relay(&mut local_stream, address)? {
-                RelayEnd::RemoteErr(err) => {
-                    log::error!("remote connection error - {:?}", err);
-                }
-                RelayEnd::LocalErr(err) => {
-                    log::error!("local connection error - {:?}", err);
-                    return Err(err);
-                }
-            };
-            log::info!("outgoing disconnect {:?}", address);
-            write!(
-                local_stream,
-                "\r\nDisconnected from {} - {}\r\n",
-                label, address
-            )?;
-        }
+        let address_book = load_address_book()?;
+        let entry = run_menu(&mut local_stream, &address_book)?;
+        log::info!("outgoing connection {:?}", entry.address);
+        write!(
+            local_stream,
+            "\r\nConnecting to {} - {}\r\n",
+            entry.label, entry.address
+        )?;
+        match run_telnet_relay(&mut local_stream, &entry.address)? {
+            RelayEnd::RemoteErr(err) => {
+                log::error!("remote connection error - {:?}", err);
+            }
+            RelayEnd::LocalErr(err) => {
+                log::error!("local connection error - {:?}", err);
+                return Err(Box::new(err));
+            }
+        };
+        log::info!("outgoing disconnect {:?}", entry.address);
+        write!(
+            local_stream,
+            "\r\nDisconnected from {} - {}\r\n",
+            entry.label, entry.address
+        )?;
 
         log::info!("incoming disconnect {:?}", local_stream.peer_addr()?);
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct AddressBook {
+    addresses: Vec<AddressBookEntry>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+struct AddressBookEntry {
+    label: String,
+    address: String,
+    meta: Option<HashMap<String, String>>,
+}
+
+fn load_address_book() -> Result<AddressBook, Box<dyn Error>> {
+    let addresses_filename = CONFIG.read()?.get::<String>("addresses_filename")?;
+    let contents = fs::read_to_string(addresses_filename)?;
+    let address_book = toml::from_str::<AddressBook>(&contents)?;
+    log::trace!("Loaded address book {:?}", address_book);
+    Ok(address_book)
+}
+
+#[derive(Debug)]
+struct DisconnectFromMenuError {}
+impl fmt::Display for DisconnectFromMenuError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+impl Error for DisconnectFromMenuError {}
+
 fn run_menu<'a>(
     local_stream: &mut TcpStream,
-    address_book: &'a Vec<(&'a str, &'a str)>,
-) -> Result<Option<&'a (&'a str, &'a str)>, std::io::Error> {
+    address_book: &'a AddressBook,
+) -> Result<&'a AddressBookEntry, Box<dyn Error>> {
     local_stream.set_read_timeout(None)?;
 
     loop {
         write!(local_stream, "\r\nAddress book:\r\n")?;
         write!(local_stream, "{:>3}: {}\r\n", 0, "Logoff")?;
+
         let mut idx = 0;
-        while idx < address_book.len() {
-            if let Some((label, address)) = address_book.get(idx) {
-                write!(local_stream, "{:>3}: {} - {}\r\n", idx + 1, label, address)?;
+        let addresses = &address_book.addresses;
+        while idx < addresses.len() {
+            if let Some(entry) = addresses.get(idx) {
+                write!(
+                    local_stream,
+                    "{:>3}: {} - {}\r\n",
+                    idx + 1,
+                    entry.label,
+                    entry.address
+                )?;
             }
             idx += 1;
         }
 
-        let input = read_line(local_stream, "> ")?;
+        let input = read_line_from_stream(local_stream, "> ")?;
         if let Ok(menu_choice) = input.trim().parse::<usize>() {
             if menu_choice == 0 {
                 write!(local_stream, "\r\nGoodbye!\r\n")?;
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::ConnectionAborted,
-                    "logoff",
-                ));
+                return Err(Box::new(DisconnectFromMenuError {}));
             }
-            if let Some(choice) = address_book.get(menu_choice - 1) {
-                return Ok(Some(choice));
+            if let Some(choice) = address_book.addresses.get(menu_choice - 1) {
+                return Ok(choice);
             }
         }
         write!(
@@ -100,7 +158,10 @@ fn run_menu<'a>(
     }
 }
 
-fn read_line(local_stream: &mut TcpStream, prompt: &str) -> Result<String, std::io::Error> {
+fn read_line_from_stream(
+    local_stream: &mut TcpStream,
+    prompt: &str,
+) -> Result<String, std::io::Error> {
     let mut buffer = [0; 1024];
     let mut input = String::new();
 
@@ -128,10 +189,14 @@ fn read_line(local_stream: &mut TcpStream, prompt: &str) -> Result<String, std::
             match ev {
                 TelnetEvents::IAC(iac) => log::info!("IAC {:?}", iac.into_bytes()),
                 TelnetEvents::Negotiation(neg) => log::info!("Negotiation {:?}", neg.into_bytes()),
-                TelnetEvents::Subnegotiation(subneg) => log::info!("Subnegotiation {:?}", subneg.into_bytes()),
+                TelnetEvents::Subnegotiation(subneg) => {
+                    log::info!("Subnegotiation {:?}", subneg.into_bytes())
+                }
                 TelnetEvents::DataReceive(data) => log::info!("DataReceive {:?}", data),
                 TelnetEvents::DataSend(data) => log::info!("DataSend {:?}", data),
-                TelnetEvents::DecompressImmediate(data) => log::info!("DecompressImmediate {:?}", data),
+                TelnetEvents::DecompressImmediate(data) => {
+                    log::info!("DecompressImmediate {:?}", data)
+                }
             }
         }
 
@@ -146,6 +211,7 @@ fn read_line(local_stream: &mut TcpStream, prompt: &str) -> Result<String, std::
     }
 }
 
+#[derive(Debug)]
 enum RelayEnd {
     LocalErr(std::io::Error),
     RemoteErr(std::io::Error),
@@ -189,19 +255,4 @@ fn relay_sockets(
             Ok(_) => Ok(()),
         },
     }
-}
-
-fn read_address_book<'a>() -> Vec<(&'a str, &'a str)> {
-    let address_book: Vec<(&str, &str)> = vec![
-        ("Level29", "bbs.fozztexx.com:23"),
-        ("Particles", "particlesbbs.dyndns.org:6400"),
-        ("The Basement BBS", "basementbbs.ddns.net:9000"),
-        ("Part-Time", "ptbbs.ddns.net:8000"),
-    ];
-    return address_book;
-}
-
-#[test]
-fn test_read_address_book() {
-    assert_eq!(2 + 2, 4);
 }

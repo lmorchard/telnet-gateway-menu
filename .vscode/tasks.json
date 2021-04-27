@@ -6,6 +6,11 @@
 			"command": "cargo watch -x run",
 			"group": "build",
 			"problemMatcher": [],
+			"options": {
+				"env": {
+					"RUST_LOG": "debug"
+				}
+			},
 			"label": "Rust: cargo watch - telnet-gateway-menu"
 		},
 		{

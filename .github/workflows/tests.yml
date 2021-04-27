@@ -162,6 +162,7 @@ jobs:
         target:
           - armv7-unknown-linux-gnueabihf
           - arm-unknown-linux-gnueabi
+    steps:
       - uses: actions/checkout@master
         with:
           lfs: true

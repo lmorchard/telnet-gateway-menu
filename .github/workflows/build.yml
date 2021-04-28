@@ -1,4 +1,4 @@
-name: Build releases
+name: Build
 on:
   push:
     branches:
@@ -7,11 +7,6 @@ on:
 
 jobs:
   build:
-    needs:
-      - security-audit
-      - lints
-      - test
-      - check
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -59,11 +54,6 @@ jobs:
           path: ./target/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
 
   build-cross:
-    needs:
-      - security-audit
-      - lints
-      - test
-      - check
     runs-on: ubuntu-latest
     strategy:
       matrix:

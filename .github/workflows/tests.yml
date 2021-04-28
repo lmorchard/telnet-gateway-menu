@@ -187,8 +187,7 @@ jobs:
           profile: minimal
           override: true
           target: ${{ matrix.target }}
-      - name: Build target
-        uses: actions-rs/cargo@v1
+      - uses: actions-rs/cargo@v1
         env:
           REPOSITORY_NAME: "${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}"
         with:
@@ -198,4 +197,4 @@ jobs:
       - uses: actions/upload-artifact@master
         with:
           name: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}
-          path: ./target/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
+          path: ./target/${{ matrix.target }}/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}

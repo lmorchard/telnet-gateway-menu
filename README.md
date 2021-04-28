@@ -1,5 +1,7 @@
 # telnet-gateway-menu
 
+[![github actions badge](https://github.com/lmorchard/telnet-gateway-menu/actions/workflows/tests.yml/badge.svg)](https://github.com/lmorchard/telnet-gateway-menu/actions)
+
 A simple address book service for telnet hosts.
 
 ## What is this?
@@ -33,5 +35,7 @@ I also wanted an excuse to play with Rust some more.
 * Share one remote connection between multiple local computers simultaneously? (i.e. like screen?)
 
 * Maybe somehow combine the functions of [tcpser] for a one-stop utility?
+
+* Build a Docker image for funsies?
 
 [tcpser]: https://github.com/go4retro/tcpser

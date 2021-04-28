@@ -1,6 +1,6 @@
 # telnet-gateway-menu
 
-[![github actions badge](https://github.com/lmorchard/telnet-gateway-menu/actions/workflows/tests.yml/badge.svg)](https://github.com/lmorchard/telnet-gateway-menu/actions)
+[![github actions badge](https://github.com/lmorchard/telnet-gateway-menu/actions/workflows/test.yml/badge.svg)](https://github.com/lmorchard/telnet-gateway-menu/actions)
 
 A simple address book service for telnet hosts.
 

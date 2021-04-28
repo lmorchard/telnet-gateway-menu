@@ -1,5 +1,4 @@
-# see also: https://gist.github.com/PurpleBooth/84b3d7d6669f77d5a53801a258ed269a
-
+name: Build releases
 on:
   push:
     branches:
@@ -15,14 +14,16 @@ jobs:
         with:
           path: ~/.cargo/registry
           key: "${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.5
+        name: Cache cargo dependencies
         with:
-          path: ~/.cargo/git
-          key: "${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            .cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+            target
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -36,18 +37,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.5
+        name: Cache cargo dependencies
         with:
-          path: ~/.cargo/registry
-          key: "${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: "${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            .cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+            target
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -73,18 +72,16 @@ jobs:
           - os: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.5
+        name: Cache cargo dependencies
         with:
-          path: ~/.cargo/registry
-          key: "${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: "${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            .cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+            target
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -99,10 +96,6 @@ jobs:
       #    args: '-- -h'
 
   build:
-    needs:
-      - lints
-      - test
-      - check
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -123,18 +116,16 @@ jobs:
       - id: get_repository_name
         run: echo ::set-output name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//")
         shell: bash
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.5
+        name: Cache cargo dependencies
         with:
-          path: ~/.cargo/registry
-          key: "${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: "${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            .cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+            target
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -169,18 +160,16 @@ jobs:
       - id: get_repository_name
         run: echo ::set-output name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//")
         shell: bash
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.5
+        name: Cache cargo dependencies
         with:
-          path: ~/.cargo/registry
-          key: "${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: "${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            .cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+            target
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable

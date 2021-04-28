@@ -1,8 +1,13 @@
 [package]
 name = "telnet-gateway-menu"
 version = "0.1.0"
+description = "A simple address book service for telnet hosts"
 authors = ["Les Orchard <me@lmorchard.com>"]
 edition = "2018"
+repository = "https://github.com/lmorchard/telnet-gateway-menu/"
+license = "CC0-1.0"
+categories = [ "command-line-interface", "command-line-utilities" ]
+keywords = [ "telnet", "bbs" ]
 
 [dependencies]
 config = "0.11"

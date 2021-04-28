@@ -25,7 +25,7 @@ lazy_static! {
 }
 
 fn main() {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    setup_logging();
 
     log::info!("starting up");
 
@@ -46,11 +46,15 @@ fn main() {
     }
 }
 
+fn setup_logging() {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+}
+
 fn load_config() -> Result<(), Box<dyn std::error::Error>> {
     let mut config = CONFIG.write()?;
     config
         .set_default("addresses_filename", "addresses.toml")?
-        .merge(config::File::with_name("Settings"))?
+        .merge(config::File::with_name("config").required(false))?
         .merge(config::Environment::with_prefix("APP"))?;
     Ok(())
 }

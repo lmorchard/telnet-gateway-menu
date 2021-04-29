@@ -36,7 +36,9 @@ fn setup_app<'a>() -> ArgMatches<'a> {
         .get_matches()
 }
 
+// TODO: this function seems awkward
 fn setup_config<'a>(app: &ArgMatches) -> Result<config::Config, Box<dyn std::error::Error>> {
+    // TODO: just chaining straight from Config::default() raises complaints of temporary references, why?
     let mut config_default = Config::default();
     let config = config_default
         .set_default("log_level", "info")?

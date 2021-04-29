@@ -18,10 +18,6 @@ I also wanted an excuse to play with Rust some more.
 
 ## To do
 
-* Create an initial addresses.toml file if none exists on first run?
-
-* Incorporate [clap](https://github.com/clap-rs/clap) for command line options
-
 * Incorporate [versio](https://github.com/chaaz/versio) for versioning
 
 * Better [actual telnet protocol support](https://github.com/envis10n/libtelnet-rs) - this is all completely naive so far

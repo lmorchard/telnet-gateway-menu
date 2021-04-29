@@ -21,6 +21,7 @@ fn main() {
     }
 }
 
+// TODO: no idea what I'm going with these lifetimes
 fn setup_app<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
         .about(crate_description!())
@@ -37,7 +38,7 @@ fn setup_app<'a>() -> ArgMatches<'a> {
 }
 
 // TODO: this function seems awkward
-fn setup_config<'a>(app: &ArgMatches) -> Result<config::Config, Box<dyn std::error::Error>> {
+fn setup_config(app: &ArgMatches) -> Result<config::Config, Box<dyn std::error::Error>> {
     // TODO: just chaining straight from Config::default() raises complaints of temporary references, why?
     let mut config_default = Config::default();
     let config = config_default

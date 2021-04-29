@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use libtelnet_rs::events::TelnetEvents;
 
-use crate::addressbook::*;
+use crate::addressbook::{load_address_book, AddressBook, AddressBookEntry};
 
 pub fn command(
     config: &config::Config,

@@ -10,10 +10,17 @@ use std::time::Duration;
 use libtelnet_rs::events::TelnetEvents;
 
 use crate::addressbook::{load_address_book, AddressBook, AddressBookEntry};
+use clap::{App, ArgMatches};
 
-pub fn command(
+pub const NAME: &str = "serve";
+
+pub fn app() -> App<'static> {
+    App::new(NAME).about("Start the telnet server")
+}
+
+pub fn execute(
+    _matches: &ArgMatches,
     config: &config::Config,
-    _app: &clap::ArgMatches,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let listener_address = format!(
         "{}:{}",

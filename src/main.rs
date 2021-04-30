@@ -4,7 +4,6 @@ extern crate libtelnet_rs;
 
 use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, ArgMatches,
-    SubCommand,
 };
 use config::Config;
 
@@ -13,32 +12,33 @@ mod subcommand_serve;
 
 fn main() {
     let app = setup_app();
-    let config = setup_config(&app).unwrap();
+    let app_m = app.get_matches();
+    let config = setup_config(&app_m).unwrap();
     setup_logging(&config).unwrap();
-    match app.subcommand_name() {
-        Some("serve") => subcommand_serve::command(&config, &app).unwrap(),
-        _ => println!("{}", app.usage()),
+    match app_m.subcommand() {
+        Some((subcommand_serve::NAME, sub_m)) => subcommand_serve::execute(&sub_m, &config),
+        _ => Ok(()),
     }
+    .unwrap()
 }
 
 // TODO: no idea what I'm going with these lifetimes
-fn setup_app<'a>() -> ArgMatches<'a> {
+fn setup_app() -> App<'static> {
     App::new(crate_name!())
         .about(crate_description!())
         .version(crate_version!())
         .author(crate_authors!())
         .setting(AppSettings::ArgRequiredElseHelp)
         .arg(
-            Arg::with_name("debug")
-                .short("d")
-                .help("Turn debugging information on"),
+            Arg::new("debug")
+                .short('d')
+                .about("Turn debugging information on"),
         )
-        .subcommand(SubCommand::with_name("serve").about("Start the telnet server"))
-        .get_matches()
+        .subcommand(subcommand_serve::app())
 }
 
 // TODO: this function seems awkward
-fn setup_config(app: &ArgMatches) -> Result<config::Config, Box<dyn std::error::Error>> {
+fn setup_config(app_m: &ArgMatches) -> Result<config::Config, Box<dyn std::error::Error>> {
     // TODO: just chaining straight from Config::default() raises complaints of temporary references, why?
     let mut config_default = Config::default();
     let config = config_default
@@ -48,7 +48,7 @@ fn setup_config(app: &ArgMatches) -> Result<config::Config, Box<dyn std::error::
         .set_default("port", "7878")?
         .merge(config::File::with_name("config").required(false))?
         .merge(config::Environment::with_prefix("APP"))?;
-    if app.is_present("debug") {
+    if app_m.is_present("debug") {
         config.set_default("debug", true)?;
         config.set("log_level", "debug")?;
     }

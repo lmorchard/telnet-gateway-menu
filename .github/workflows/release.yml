@@ -52,16 +52,10 @@ jobs:
         with:
           path: ./target/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
           name: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
-      - if: matrix.os != windows-latest
-        env:
-          BUILD_PATH: ./target/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
-          RELEASE_PATH: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
-        run: cp $BUILD_PATH $RELEASE_PATH
-      - if: matrix.os == windows-latest
-        env:
-          BUILD_PATH: .\\target\\release\\${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
-          RELEASE_PATH: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
-        run: copy %BUILD_PATH% %RELEASE_PATH%
+      - if: matrix.os != "windows-latest"
+        run: cp ./target/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }} ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
+      - if: matrix.os == "windows-latest"
+        run: copy .\target\release\${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }} ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true

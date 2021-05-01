@@ -18,7 +18,7 @@ I also wanted an excuse to play with Rust some more.
 
 ## To do
 
-* Incorporate [versio](https://github.com/chaaz/versio) for versioning
+* Package up some doco with the executable for release?
 
 * Better [actual telnet protocol support](https://github.com/envis10n/libtelnet-rs) - this is all completely naive so far
 

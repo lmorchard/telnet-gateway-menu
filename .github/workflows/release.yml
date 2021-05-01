@@ -1,9 +1,9 @@
-name: Build
-on:
+name: Releases
+
+on: 
   push:
-    branches:
-      - "*"
-  pull_request: null
+    tags:
+    - '*'
 
 jobs:
   build:
@@ -50,8 +50,8 @@ jobs:
           args: "--release"
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}
           path: ./target/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
+          name: builds/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
 
   build-cross:
     runs-on: ubuntu-latest
@@ -92,5 +92,19 @@ jobs:
           args: --release --target ${{ matrix.target }}
       - uses: actions/upload-artifact@master
         with:
-          name: ${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}
           path: ./target/${{ matrix.target }}/release/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}${{ matrix.suffix }}
+          name: builds/${{ steps.get_repository_name.outputs.REPOSITORY_NAME }}-${{ matrix.target }}${{ matrix.suffix }}
+
+  release:
+    needs:
+      - build
+      - build-cross
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          lfs: true
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "builds/*"
+          token: ${{ secrets.GITHUB_TOKEN }}

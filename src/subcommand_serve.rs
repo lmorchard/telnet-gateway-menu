@@ -137,8 +137,8 @@ fn read_line_from_stream(
 
     local_stream.write_all(prompt.as_bytes())?;
 
+    // TODO: move this into its own thread and work with events & a buffer here?
     let mut parser = libtelnet_rs::Parser::new();
-
     loop {
         // Try reading a chunk of input
         let len = match local_stream.read(&mut buffer) {
@@ -150,32 +150,38 @@ fn read_line_from_stream(
             Ok(len) => Ok(len),
         }?;
 
-        // TODO: work out when ont to echo per telnet protocol
+        // TODO: work out when not to echo per telnet protocol
         local_stream.write_all(&buffer[0..len])?;
 
-        // TODO: support backspace!
         let telnet_events = parser.receive(&buffer[0..len]);
         for ev in telnet_events {
             match ev {
-                TelnetEvents::IAC(iac) => log::info!("IAC {:?}", iac.into_bytes()),
-                TelnetEvents::Negotiation(neg) => log::info!("Negotiation {:?}", neg.into_bytes()),
-                TelnetEvents::Subnegotiation(subneg) => {
-                    log::info!("Subnegotiation {:?}", subneg.into_bytes())
+                TelnetEvents::DataReceive(data) => {
+                    log::trace!("DataReceive {:?}", data);
+                    // Collect this chunk of input until it contains a return
+                    // TODO: support backspace!
+                    if let Ok(data) = str::from_utf8(&data) {
+                        input.push_str(data);
+                        if let Some(pos) = input.find('\r') {
+                            input.truncate(pos);
+                            return Ok(input);
+                        }
+                    }
                 }
-                TelnetEvents::DataReceive(data) => log::info!("DataReceive {:?}", data),
-                TelnetEvents::DataSend(data) => log::info!("DataSend {:?}", data),
+                TelnetEvents::DataSend(data) => {
+                    log::trace!("DataSend {:?}", data);
+                    local_stream.write_all(&data)?;
+                }
                 TelnetEvents::DecompressImmediate(data) => {
-                    log::info!("DecompressImmediate {:?}", data)
+                    log::trace!("DecompressImmediate {:?}", data)
                 }
-            }
-        }
-
-        // Collect this chunk of input until it contains a return
-        if let Ok(data) = str::from_utf8(&buffer[0..len]) {
-            input.push_str(data);
-            if let Some(pos) = input.find('\r') {
-                input.truncate(pos);
-                return Ok(input);
+                TelnetEvents::IAC(iac) => log::trace!("telnet IAC {:?}", iac.into_bytes()),
+                TelnetEvents::Negotiation(neg) => {
+                    log::trace!("telnet Negotiation {:?}", neg.into_bytes())
+                }
+                TelnetEvents::Subnegotiation(subneg) => {
+                    log::trace!("telnet Subnegotiation {:?}", subneg.into_bytes())
+                }
             }
         }
     }
